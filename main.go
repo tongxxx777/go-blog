@@ -1,10 +1,10 @@
 package main
 
 import (
+	"blog/bootstrap"
 	"blog/pkg/database"
 	"blog/pkg/logger"
 	"blog/pkg/route"
-	"blog/pkg/types"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -32,37 +32,6 @@ func (a Article) Link() string {
 		return ""
 	}
 	return showURL.String()
-}
-
-func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. 获取 URL 参数
-	id := route.GetRouteVariable("id", r)
-	// 2. 读取对应的文章数据
-	article, err := getArticleByID(id)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// 3.1 数据未找到
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "404 文章未找到")
-		} else {
-			logger.LogError(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "500 服务器内部错误")
-		}
-	} else {
-		// 4. 读取成功
-		tmpl, err := template.New("show.gohtml").
-			Funcs(template.FuncMap{
-				"RouteName2URL": route.Name2URL,
-				"Int64ToString": types.Int64ToString,
-			}).
-			ParseFiles("resources/views/articles/show.gohtml")
-		logger.LogError(err)
-
-		err = tmpl.Execute(w, article)
-		logger.LogError(err)
-	}
 }
 
 func getArticleByID(id string) (Article, error) {
@@ -391,15 +360,13 @@ func main() {
 	database.Initialize()
 	db = database.DB
 
-	route.Initialize()
-	router = route.Router
+	router = bootstrap.SetupRoute()
 
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesEditHandler).Methods("GET").Name("articles.edit")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
-	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
 	router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")
 
 	// 中间件：强制内容类型为 HTML
