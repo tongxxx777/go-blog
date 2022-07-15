@@ -25,15 +25,6 @@ type Article struct {
 	ID          int64
 }
 
-func (a Article) Link() string {
-	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
-	if err != nil {
-		logger.LogError(err)
-		return ""
-	}
-	return showURL.String()
-}
-
 func getArticleByID(id string) (Article, error) {
 	article := Article{}
 	query := "SELECT * FROM articles WHERE id = ?"
@@ -143,34 +134,6 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			logger.LogError(err)
 		}
 	}
-}
-
-func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. 执行查询语句，返回一个结果集
-	rows, err := db.Query("SELECT * from articles")
-	logger.LogError(err)
-	defer rows.Close()
-
-	var articles []Article
-	//2. 循环读取结果
-	for rows.Next() {
-		var article Article
-		err := rows.Scan(&article.ID, &article.Title, &article.Body)
-		logger.LogError(err)
-		articles = append(articles, article)
-	}
-
-	// 2.3 检测遍历时是否发生错误
-	err = rows.Err()
-	logger.LogError(err)
-
-	// 3. 加载模板
-	tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
-	logger.LogError(err)
-
-	// 4. 渲染模板，将所有文章的数据传输进去
-	err = tmpl.Execute(w, articles)
-	logger.LogError(err)
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -364,7 +327,6 @@ func main() {
 	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
 
-	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesEditHandler).Methods("GET").Name("articles.edit")
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
