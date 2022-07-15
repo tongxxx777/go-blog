@@ -8,10 +8,10 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-// DB 数据库对象
+// 数据库对象
 var DB *sql.DB
 
-// Initialize 初始化数据库
+// 初始化数据库
 func Initialize() {
 	initDB()
 	createTables()
