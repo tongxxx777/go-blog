@@ -357,9 +357,11 @@ func (a Article) Delete() (rowsAffected int64, err error) {
 }
 
 func main() {
+	// 暂时保留
 	database.Initialize()
 	db = database.DB
 
+	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
 
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
